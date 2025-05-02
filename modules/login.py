@@ -208,15 +208,17 @@ class LoginWindow(QMainWindow):
         try:
             user = db.authenticate_user(identifier, password)
             if user:
+                role = user.get('role', 'Unknown Role')  # Retrieve role
+                last_name = user.get('last_name', 'Unknown')  # Retrieve last name
                 message_box = create_styled_message_box(
                     QMessageBox.Information, 
                     "Success", 
-                    f"Welcome {user['name']}!"
+                    f"Welcome {user['name']} {last_name}!"
                 )
                 message_box.exec()
                 
-                # Redirect to HomePage
-                self.home_page = PetMedix()
+                # Redirect to HomePage with role and last_name
+                self.home_page = PetMedix(role=role, last_name=last_name)  # Pass both arguments
                 self.home_page.showMaximized()  # Ensure the HomePage is maximized
                 self.close()  # Close the LoginWindow
             else:
@@ -225,4 +227,3 @@ class LoginWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to login: {e}")
         finally:
             db.close_connection()
-

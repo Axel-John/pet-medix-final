@@ -156,7 +156,7 @@ class SignUpWindow(QMainWindow):
         first_name = self.first_name_input.text().strip()
         last_name = self.last_name_input.text().strip()
         email = self.email_input.text().strip()
-        role = self.role_input.currentText().strip()
+        role = self.role_input.currentText()  # Use self.role_input instead of self.role_dropdown
         password = self.password_input.text().strip()
 
         if not (first_name and last_name and email and password) or role == "Select Role":
@@ -187,7 +187,7 @@ class SignUpWindow(QMainWindow):
                 return
 
             # Create user and retrieve the generated USER_ID
-            user_id = db.create_user(full_name, email, password, role)
+            user_id = db.create_user(first_name, last_name, email, password, role)
             if user_id:
                 QMessageBox.information(self, "Success", f"Account created successfully! Your username is: {user_id}")
 

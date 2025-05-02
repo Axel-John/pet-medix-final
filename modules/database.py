@@ -3,7 +3,7 @@ import hashlib
 from datetime import datetime
 
 class Database:
-    def __init__(self, host="localhost", user="root", password="joelmar123", database="petmedix"):
+    def __init__(self, host="localhost", user="root", password="", database="petmedix"):
         try:
             self.conn = mariadb.connect(
                 host=host,
@@ -27,6 +27,7 @@ class Database:
             CREATE TABLE IF NOT EXISTS users (
                 user_id VARCHAR(10) PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
+                last_name VARCHAR(100), 
                 email VARCHAR(100) NOT NULL UNIQUE,
                 hashed_password VARCHAR(64) NOT NULL,
                 role VARCHAR(50) NOT NULL
@@ -56,6 +57,7 @@ class Database:
                 color VARCHAR(50),
                 birthdate DATE,
                 age INT,
+                photo_path VARCHAR(255),
                 FOREIGN KEY (client_id) REFERENCES clients(client_id) ON DELETE CASCADE
             );
             """)
@@ -152,7 +154,7 @@ class Database:
             print(f"❌ Error generating USER_ID: {e}")
             return None
 
-    def create_user(self, name, email, password, role):
+    def create_user(self, name, last_name, email, password, role):
         """Insert a user with a generated USER_ID."""
         if not self.cursor:
             print("❌ Database not connected.")
@@ -166,8 +168,8 @@ class Database:
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         try:
             self.cursor.execute(
-                "INSERT INTO users (USER_ID, NAME, EMAIL, HASHED_PASSWORD, ROLE) VALUES (?, ?, ?, ?, ?)",
-                (user_id, name, email, hashed_password, role)
+                "INSERT INTO users (USER_ID, NAME, LAST_NAME, EMAIL, HASHED_PASSWORD, ROLE) VALUES (?, ?, ?, ?, ?, ?)",
+                (user_id, name, last_name, email, hashed_password, role)
             )
             self.conn.commit()
             print(f"✅ User created with USER_ID: {user_id}")
@@ -186,7 +188,7 @@ class Database:
         try:
             self.cursor.execute(
                 """
-                SELECT user_id, name, role 
+                SELECT user_id, name, last_name, role 
                 FROM users 
                 WHERE (email = ? OR user_id = ?) AND hashed_password = ?
                 """,
@@ -194,7 +196,12 @@ class Database:
             )
             user = self.cursor.fetchone()
             if user:
-                return {"user_id": user[0], "name": user[1], "role": user[2]}  # Return user details
+                return {
+                    "user_id": user[0],
+                    "name": user[1],
+                    "last_name": user[2],  # Include last_name
+                    "role": user[3]        # Include role
+                }
             else:
                 return None
         except Exception as e:
@@ -315,7 +322,9 @@ class Database:
                 JOIN clients c ON a.client_id = c.client_id
                 ORDER BY a.date DESC
             """)
-            return self.cursor.fetchall()  # Return all rows
+            appointments = self.cursor.fetchall()
+            print(f"Fetched appointments: {appointments}")  # Debug: Print fetched data
+            return appointments
         except Exception as e:
             print(f"❌ Error fetching appointments: {e}")
             return []
